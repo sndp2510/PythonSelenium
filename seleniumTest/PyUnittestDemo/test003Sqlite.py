@@ -5,8 +5,11 @@ from selenium.webdriver.chrome.options import Options
 import unittest
 import os as system, time
 import sqlite3
+from sqlite3 import Error
+
 
 class Login(unittest.TestCase):
+    
     def setUp(self):
         #get the current directory absolute path
         currentWorkingDirectory = system.getcwd()
@@ -19,22 +22,27 @@ class Login(unittest.TestCase):
         options.add_argument("--start-maximized")
         self.browser = webdriver.Chrome(executable_path=chromeDriverAbsolutePath,chrome_options=options)
         self.baseUrl = "http://newtours.demoaut.com/"
-        self.sqliteConnect = sqlite3.connect('example.db')   
+        
+        self.examleDbAbsolutePath = currentWorkingDirectory + "example.sqlite"        
+        
+        
         
     def test_login(self):
         driver=self.browser
         driver.implicitly_wait(30)
         
-        csvFile = open(self.userDetailsCsvAbsolutePath,"r")
         
-        for line in csvFile:
-            driver.get(self.baseUrl)
-            te = line.rstrip("\n")
-            record = te.split(",")            
-            print(record)
+        print(self.examleDbAbsolutePath)
+        create_connection = self.create_connection(self.examleDbAbsolutePath)
+        rows = self.select_query(create_connection, "select username, password from userdetails")
+        
+        for row in rows:
             
-            driver.find_element(By.NAME, "userName").send_keys(record[0])
-            driver.find_element(By.XPATH, "//input[@name='password']").send_keys(record[1])
+            driver.get(self.baseUrl)
+            print(">>", row)
+            
+            driver.find_element(By.NAME, "userName").send_keys(row[0])
+            driver.find_element(By.XPATH, "//input[@name='password']").send_keys(row[1])
             driver.find_element(By.XPATH,"//input[@name='login' and @value='Login']").click()        
             
             # hard wait 
@@ -43,11 +51,42 @@ class Login(unittest.TestCase):
             print(headerElement.is_displayed())   
             self.assertTrue(headerElement.is_displayed(), "Login Success")
             
-        csvFile.close
+        
                        
     def tearDown(self):
         self.browser.quit()
         
+    
+    #Method to create a connection with sqlite database
+    def create_connection(self,db_file):
+                  
+        conn = None
+        try:
+            conn = sqlite3.connect(db_file)
+        except Error as e:
+            print(e)
+     
+        return conn    
+    
+    
+    #Accept the connection object and execute query and close connection
+    def select_query (self, conn, queryStr):
+        try:
+            print(queryStr)
+            cur=conn.cursor()
+            cur.execute(queryStr)
+            
+            rows = cur.fetchall()
+            return rows
+        
+        except sqlite3.Error as error:
+            print("Failed to read data from sqlite table", error)
+            
+        finally:
+            if (conn):
+                conn.close()
+                print("The SQLite connection is closed")
+            
         
 if __name__ == "__main__":
     unittest.main()
