@@ -17,9 +17,9 @@ class Login(unittest.TestCase):
         #path to the chromeDriver
         chromeDriverAbsolutePath = currentWorkingDirectory + "drivers\chromedriver.exe"
         print(chromeDriverAbsolutePath)
-        self.userDetailsCsvAbsolutePath = currentWorkingDirectory + "userdetail.csv"
+        
         options =  Options()
-        options.add_argument("--start-maximized")
+        options.add_argument("--start-maximized") #Option to start the browser maximized
         self.browser = webdriver.Chrome(executable_path=chromeDriverAbsolutePath,chrome_options=options)
         self.baseUrl = "http://newtours.demoaut.com/"
         
